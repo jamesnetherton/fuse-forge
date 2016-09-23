@@ -25,7 +25,6 @@ import org.jboss.forge.addon.dependencies.util.CompositeDependencyFilter;
 import org.jboss.forge.addon.dependencies.util.NonSnapshotDependencyFilter;
 import org.jboss.forge.furnace.util.Predicate;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,14 +32,13 @@ import java.util.stream.Collectors;
 public class MavenUtils {
 
     private static final Pattern REDHAT_VERSION_PATTERN = Pattern.compile("^.*\\.redhat-.*$");
-    private static final String[] BANNED_VERSIONS = {"2.2.0.redhat-053", "2.2.0.redhat-066", "2.2.0.redhat-073", "2.2.0.redhat-079"};
+    private static final Pattern BANNED_VERSION_PATTERN = Pattern.compile("^2\\.2\\.0\\.redhat-[0-9]{3}$");
 
     public static List<String> resolveVersions(DependencyResolver resolver, Coordinate coordinate) {
-        List<String> bannedVersions = Arrays.asList(BANNED_VERSIONS);
         List<Coordinate> versions = resolveVersions(resolver, coordinate, new NonSnapshotDependencyFilter());
         return versions.stream()
             .map(Coordinate::getVersion)
-            .filter(v -> !bannedVersions.contains(v))
+            .filter(v -> !isBannedVersion(v))
             .collect(Collectors.toList());
     }
 
@@ -55,10 +53,9 @@ public class MavenUtils {
     }
 
     public static String resolveLatestRedhatVersion(DependencyResolver resolver, Coordinate coordinate) {
-        List<String> bannedVersions = Arrays.asList(BANNED_VERSIONS);
         Predicate<Dependency> predicate = dependency -> {
             String version = dependency.getCoordinate().getVersion();
-            return isRedhatVersion(version) && !bannedVersions.contains(version);
+            return isRedhatVersion(version) && !isBannedVersion(version);
         };
 
         List<Coordinate> versions = resolveVersions(resolver, coordinate, new NonSnapshotDependencyFilter(), predicate);
@@ -101,5 +98,9 @@ public class MavenUtils {
         }
 
         return String.format("%s:%s:%s", archetype.getGroupId(), archetype.getArtifactId(), archetype.getVersion());
+    }
+
+    private static boolean isBannedVersion(String version) {
+        return BANNED_VERSION_PATTERN.matcher(version).matches();
     }
 }

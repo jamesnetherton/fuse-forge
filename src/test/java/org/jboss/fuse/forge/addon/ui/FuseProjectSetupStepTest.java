@@ -28,6 +28,7 @@ import org.jboss.forge.arquillian.archive.AddonArchive;
 import org.jboss.forge.furnace.repositories.AddonDependencyEntry;
 import org.jboss.fuse.forge.addon.project.FuseProjectType;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Assert;
@@ -66,8 +67,10 @@ public class FuseProjectSetupStepTest {
             .addAsResource("archetype-catalog.xml", "archetype-catalog.xml");
         catalog.as(ZipExporter.class).exportTo(new File("target/archetypes-catalog.jar"), true);
 
+        String beansXML = "<beans><alternatives><class>org.jboss.fuse.forge.addon.ui.MockCatalogDependencyResolver</class></alternatives></beans>";
+
         return ShrinkWrap.create(AddonArchive.class)
-            .addBeansXML()
+            .addBeansXML(new StringAsset(beansXML))
             .addAsAddonDependencies(
                 AddonDependencyEntry.create("org.jboss.forge.furnace.container:cdi"),
                 AddonDependencyEntry.create("org.jboss.forge.addon:ui"),
@@ -76,7 +79,8 @@ public class FuseProjectSetupStepTest {
                 AddonDependencyEntry.create("org.jboss.forge.addon:projects"),
                 AddonDependencyEntry.create("org.jboss.forge.addon:maven"),
                 AddonDependencyEntry.create("org.jboss.fuse.forge.addon:fuse-forge")
-            ).addClasses(MockCatalogDependencyResolver.class);
+            )
+            .addClasses(MockCatalogDependencyResolver.class);
     }
 
     @Test
